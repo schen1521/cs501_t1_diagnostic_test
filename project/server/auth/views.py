@@ -14,11 +14,11 @@ class RegisterAPI(MethodView):
     """
 
     def get(self):
-    	responseObject = {
-    		'status': 'success',
-    		'message': 'Request successful but please send an HTTP POST request to register the user.'
-    	}
-    	return make_response(jsonify(responseObject)), 201
+        responseObject = {
+            'status': 'success',
+            'message': 'Request successful but please send an HTTP POST request to register the user.'
+        }
+        return make_response(jsonify(responseObject)), 201
 
     def post(self):
         # get the post data
@@ -31,12 +31,13 @@ class RegisterAPI(MethodView):
                     email=post_data.get('email'),
                     password=post_data.get('password')
                 )
-
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
                 # generate the auth token
                 auth_token = user.encode_auth_token(user.id)
+
+                print(user.decode_auth_token(auth_token))
                 responseObject = {
                     'status': 'success',
                     'message': 'Successfully registered.',
@@ -57,6 +58,18 @@ class RegisterAPI(MethodView):
             return make_response(jsonify(responseObject)), 202
 
 
+user_blueprint = Blueprint('user', __name__)
+
+class UserAPI(MethodView):
+    def get(self):
+        users = User.query.all()
+
+        users_list = [user.email for user in users]
+
+        return make_response(jsonify(users_list)), 201
+
+
+
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
 
@@ -65,4 +78,26 @@ auth_blueprint.add_url_rule(
     '/auth/register',
     view_func=registration_view,
     methods=['POST', 'GET']
+)
+
+
+
+# define API for users
+user_view = UserAPI.as_view("user_api")
+
+user_blueprint.add_url_rule(
+    '/users/index',
+    view_func=user_view,
+    methods=['GET']
+)
+
+
+# Adding a view for home page
+home_blueprint = Blueprint('home', __name__)
+def home():
+    return "CS501 Diagnostic Test"
+home_blueprint.add_url_rule(
+    '/',
+    'home',
+    home
 )
